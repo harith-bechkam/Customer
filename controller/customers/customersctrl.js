@@ -1,46 +1,48 @@
-let Orders = require('../../model/orders_model')
+let Customers = require('../../model/customers_model')
+let User = require('../../model/users_model')
 const helper = require("../../utils/helper");
 const APIResp = require("../../utils/APIResp");
 const moment = require('moment')
+require('dotenv').config()
+
 
 const ordersController = () => {
 
-    const createOrders = async (req, res) => {
+    const createCustomers = async (req, res) => {
         try {
             const userInput = helper.getReqValues(req);
 
-            let orders = await Orders.find({ order_id: userInput.order_id })
-            if (orders.length != 0) {
-                return APIResp.getErrorResult(`order id - ${userInput.order_id} is already present`, res)
+            let orders = await User.find({ email: userInput.user_email })
+            if (orders.length == 0) {
+                return APIResp.getErrorResult(`email - ${userInput.user_email} is not present`, res)
             }
 
-            let data = await Orders.create({
-                order_id: userInput.order_id,
+            let data = await Customers.create({
+                user_email: userInput.user_email,
                 item_name: userInput.item_name,
                 cost: userInput.cost,
                 order_date: moment(userInput.order_date, 'YYYY/MM/DD').format(),
                 delivery_date: moment(userInput.delivery_date, 'YYYY/MM/DD').format()
             });
             data.save();
-            APIResp.getSuccessResult(data, "orders inserted successfully", res);
-
-
+            APIResp.getSuccessResult(data, "customers data inserted successfully", res);
         }
         catch (err) {
             console.log(err)
             APIResp.getINTERNALSERVERError(err, res);
         }
     }
-    const updateOrders = async (req, res) => {
+
+    const updateCustomers = async (req, res) => {
         try {
             const userInput = helper.getReqValues(req);
 
-            let orders = await Orders.find({ order_id: userInput.order_id })
+            let orders = await Customers.find({ _id: userInput.customer_id })
             if (orders.length == 0) {
-                return APIResp.getErrorResult(`order id - ${userInput.order_id} is not present`, res)
+                return APIResp.getErrorResult(`customer_id - ${userInput.customer_id} is not present`, res)
             }
 
-            let data = await Orders.updateMany({ order_id: userInput.order_id }, {
+            let data = await Customers.updateMany({ _id: userInput.customer_id }, {
                 $set: {
                     item_name: userInput.item_name,
                     cost: userInput.cost,
@@ -49,7 +51,7 @@ const ordersController = () => {
                 }
             })
             APIResp.getSuccessResult(data,
-                `order id - ${userInput.order_id} updated successfully`, res);
+                `customer id - ${userInput.customer_id} updated successfully`, res);
 
         }
         catch (err) {
@@ -59,11 +61,11 @@ const ordersController = () => {
 
     }
 
-    const listOrders = async (req, res) => {
+    const listCustomers = async (req, res) => {
         try {
             const userInput = helper.getReqValues(req);
 
-            let data = await Orders.find({ order_date: moment(userInput.order_date, 'YYYY/MM/DD').format() })
+            let data = await Customers.find({ order_date: moment(userInput.order_date, 'YYYY/MM/DD').format() })
             var msg = ''
             msg = data.length ?
                 `listed successfully based on order_date`
@@ -76,15 +78,15 @@ const ordersController = () => {
         }
     }
 
-    const listDelivery = async (req, res) => {
+    const listCustomers1 = async (req, res) => {
         try {
             const userInput = helper.getReqValues(req);
 
-            let data = await Orders.find({ delivery_date: moment(userInput.delivery_date, 'YYYY/MM/DD').format() })
+            let data = await Customers.find({})
             var msg = ''
             msg = data.length ?
-                `listed successfully based on delivery_date`
-                : `no records are available based on delivery_date`
+                `customer data listed successfully`
+                : `no records are available in customers`
             APIResp.getSuccessResult(data, msg, res);
         }
         catch (err) {
@@ -93,36 +95,43 @@ const ordersController = () => {
         }
     }
 
-    const search = async (req, res) => {
+
+    const deleteSingleCustomer = async (req, res) => {
         try {
             const userInput = helper.getReqValues(req);
 
-            let data = await Orders.find({ order_id: userInput.order_id })
-            var msg = ''
-            msg = data.length ?
-                `records displayed based on order id - ${userInput.order_id}`
-                : `no records are available`
-            APIResp.getSuccessResult(data, msg, res);
-        }
-        catch (err) {
-            console.log(err)
-            APIResp.getINTERNALSERVERError(err, res);
-        }
-    }
+            let orders = await Customers.find({ _id: userInput.customer_id })
 
-    const deleteOrders = async (req, res) => {
-        try {
-            const userInput = helper.getReqValues(req);
-            let inputorder = JSON.parse(userInput.order_id)
-
-            let orders = await Orders.find({ order_id: inputorder })
             if (orders.length == 0) {
-                return APIResp.getErrorResult(`order id - ${inputorder} is not present`, res)
+                return APIResp.getErrorResult(`customer id - ${userInput.customer_id} is not present`, res)
             }
 
-            let data = await Orders.deleteMany({ order_id: inputorder })
+            let data = await Customers.deleteOne({ _id: userInput.customer_id })
             APIResp.getSuccessResult(data,
-                `records deleted based on order id - ${inputorder}`, res);
+                `records deleted based on customer id - ${userInput.customer_id}`, res);
+
+        }
+        catch (err) {
+            console.log(err)
+            APIResp.getINTERNALSERVERError(err, res);
+        }
+    }
+
+    const deleteMultipleCustomer = async (req, res) => {
+        try {
+            const userInput = helper.getReqValues(req);
+
+            for (let val of userInput.customer_id) {
+                let orders = await Customers.find({ _id: val })
+                if (orders.length == 0) {
+                    return APIResp.getErrorResult(`customer id - ${userInput.customer_id} is not present`, res)
+                }
+            }
+
+
+            let data = await Customers.deleteMany({ _id: { $in: userInput.customer_id } })
+            APIResp.getSuccessResult(data,
+                `records deleted based on customer id - ${userInput.customer_id}`, res);
 
         }
         catch (err) {
@@ -132,12 +141,14 @@ const ordersController = () => {
     }
 
     return {
-        createOrders,
-        updateOrders,
-        listOrders,
-        listDelivery,
-        search,
-        deleteOrders
+        createCustomers,
+        updateCustomers,
+
+        listCustomers,
+        listCustomers1,
+
+        deleteSingleCustomer,
+        deleteMultipleCustomer
     };
 };
 module.exports = ordersController();

@@ -1,14 +1,14 @@
 // const { ObjectId } = require('mongodb')
 const mongoose = require("mongoose");
 
-const ordersSchema = new mongoose.Schema(
+const customersSchema = new mongoose.Schema(
     {
-        order_id: {
+        user_email: {
             type: String,
             required: true
         },
         item_name: {
-            type: String,
+            type: String,   
             required: true,
         },
         cost: {
@@ -29,6 +29,6 @@ const ordersSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-const orders = mongoose.model("orders", ordersSchema);
+const customer = mongoose.model("customers", customersSchema);
 
-module.exports = orders
+module.exports = customer
